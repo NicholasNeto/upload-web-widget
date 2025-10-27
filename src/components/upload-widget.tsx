@@ -3,6 +3,7 @@ import { UploadWidgetDropzone } from "./upload-widget-dropzone";
 import { UploadWidgetHeader } from "./upload-widget-header";
 import { useState } from "react";
 import { UploadWidgetMinimizedButton } from "./upload-widget-minimized-button";
+import { UploadWidgetUploadList } from "./upload-widget-upload-list";
 
 export function UploadWidget() {
 
@@ -21,7 +22,7 @@ export function UploadWidget() {
           <div className="flex flex-col gap-4 py-3">
             <UploadWidgetDropzone></UploadWidgetDropzone>
             <div className="h-px bg-zinc-800 border-t border-black/50 box-content" />
-            <UploadWidgetDropzone></UploadWidgetDropzone>
+            <UploadWidgetUploadList></UploadWidgetUploadList>
           </div>
         </Collapsible.Content>
       </div>
