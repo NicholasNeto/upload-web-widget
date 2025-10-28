@@ -10,7 +10,7 @@ export function UploadWidgetUploadList() {
       </span>
 
       {isUploadListEmpty ? (
-        <span className="text-xs text-zinc-400"> No uploads added</span>
+        <span className="text-xs text-zinc-400">No uploads added</span>
       ) : (
         <div className="flex flex-col gap-2">
           <UploadWidgetUploadItem />
