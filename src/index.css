@@ -6,15 +6,29 @@
 }
 
 @theme {
+    /* Fontes */
+  --font-sans: "Inter", sans-serif;
+
+   /* Sombras */
   --shadow-3xl: 0 35px 35px rgba(0, 0, 0, 0.25); 
+
+    /* Tamanho de texto extra pequeno */
   --text-xxs: 0.625rem; 
+
+    /* Animação customizada */
+  @keyframes border {
+    to {
+      --border-angle: 360deg;
+    }
+  }
+
+   /* Variável que define a animação */
+  --animate-border: border 2s linear infinite;
 }
 
 body {
   font-family: var(--font-sans);
 } 
-
-
 
 @layer utilities {
   .shadow-shape {
@@ -33,3 +47,9 @@ body {
   }
 }
 
+
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
