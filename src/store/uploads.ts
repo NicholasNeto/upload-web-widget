@@ -1,38 +1,86 @@
 import { create } from "zustand";
+import { enableMapSet } from "immer";
+import { immer } from "zustand/middleware/immer";
+import { uploadFileToStorage } from "../http/upload-file-to-storage";
 
+// Permite que o Immer trabalhe com Map/Set corretamente
+enableMapSet();
 
 export type Upload = {
-    name: string;
-    file: File; 
-}
+  name: string;
+  file: File;
+};
 
 type UploadState = {
-    uploads: Map<string, Upload>;
-    addUploads: (files: File[]) => void
-}
+  uploads: Map<string, Upload>;
+  addUploads: (files: File[]) => void;
+};
 
-export const  useUploads = create<UploadState>((set, get) => {
+// ✅ Novo padrão Zustand 5 + Immer
 
-    function addUploads(files: File[]){
-        for (const file of files) {
-            console.log(name, file);
+export const useUploads = create<UploadState>()(
+    immer((set, get) => {
 
-            const uploadId = crypto.randomUUID();
 
-            const upload: Upload = {
-              name: file.name, 
-              file  
+        async function processUpload(uploadId: string) {
+            const upload = get().uploads.get(uploadId);  
+
+            if (!upload) {
+                return;
+              }
+        
+              await uploadFileToStorage({ file: upload.file });
+        }
+
+        function addUploads(files: File[]) {
+            for (const file of files) {
+              const uploadId = crypto.randomUUID();
+      
+              const upload: Upload = {
+                name: file.name,
+                file,
+              };
+      
+              set((state) => {
+                state.uploads.set(uploadId, upload);
+              });
+      
+              processUpload(uploadId);
             }
-
-            set((state) => {
-                return {
-                    uploads: state.uploads.set(uploadId, upload)
-                }
-            })
           }
 
-    }
+        return {
+            uploads: new Map(),
+            addUploads 
+        }
 
-    return { uploads: new Map(), addUploads }
-}) 
+    })
+)
+ 
 
+// export const useUploads = create<UploadState>()(
+//     immer((set, get) => ({
+//       uploads: new Map(),
+//       addUploads(files) {
+//         for (const file of files) {
+//           const uploadId = crypto.randomUUID();
+//           const upload: Upload = { name: file.name, file };
+  
+//           // Immer habilita mutação direta
+//           set((state) => {
+//             state.uploads.set(uploadId, upload);
+//           });
+//         }
+//       },
+//       async processUpload(){
+//           const upload = get().uploads.get(uploadId);
+  
+//           if (!upload) {
+//               return;
+//             }
+  
+//             await uploadFileToStorage({ file: upload.file });
+  
+//       }
+//     }))
+//   );
