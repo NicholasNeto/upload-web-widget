@@ -4,6 +4,7 @@ import { enableMapSet } from "immer";
 import { immer } from "zustand/middleware/immer";
 import { uploadFileToStorage } from "../http/upload-file-to-storage";
 import { useShallow } from "zustand/shallow";
+import { compressImage } from "../utils/compress-image";
 
 // Permite que o Immer trabalhe com Map/Set corretamente
 enableMapSet();
@@ -51,9 +52,17 @@ export const useUploads = create<UploadState>()(
       }
 
       try {
+
+        const compressedFile = await compressImage({
+            file: upload.file,
+            maxWidth: 200,
+            maxHeight: 200,
+            quality: 0.5,
+          });
+
         await uploadFileToStorage(
             {
-                file: upload.file,
+                file: compressedFile,
                 onProgress(sizeInBytes) {
                 updateUpload(uploadId, {
                     uploadSizeInBytes: sizeInBytes,
