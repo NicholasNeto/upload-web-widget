@@ -1,9 +1,13 @@
+import * as Progress from "@radix-ui/react-progress";
+
 import { Download, ImageUp, Link2, RefreshCcw, X } from "lucide-react";
 import { Button } from "./ui/button";
-import * as Progress from "@radix-ui/react-progress";
 import { motion } from "motion/react";
+import { useUploads } from "../store/uploads";
+import type { Upload } from "../store/uploads";
 import { formatBytes } from "../utils/format-bytes";
-import { useUploads, type Upload } from "../store/uploads";
+import { downloadUrl } from "../utils/download-url";
+
 
 interface UploadWidgetUploadItemProps {
   upload: Upload;
@@ -15,13 +19,14 @@ export function UploadWidgetUploadItem({
   uploadId,
 }: UploadWidgetUploadItemProps) {
   const cancelUpload = useUploads((store) => store.cancelUpload);
+  const retryUpload = useUploads((store) => store.retryUpload);
 
   const progress = Math.min(
     upload.compressedSizeInBytes
-    ? Math.round(
-        (upload.uploadSizeInBytes * 100) / upload.compressedSizeInBytes
-      )
-    : 0,
+      ? Math.round(
+          (upload.uploadSizeInBytes * 100) / upload.compressedSizeInBytes
+        )
+      : 0,
     100
   );
 
@@ -37,7 +42,7 @@ export function UploadWidgetUploadItem({
       <div className="flex flex-col gap-1">
         <span className="text-xs font-medium flex items-center gap-1">
           <ImageUp className="size-3 text-zinc-300" strokeWidth={1.5} />
-          <span>{upload.name}</span>
+          <span className="max-w-[180px] truncate">{upload.name}</span>
         </span>
 
         <span className="text-xxs text-zinc-400 flex gap-1.5 items-center">
@@ -46,10 +51,21 @@ export function UploadWidgetUploadItem({
           </span>
           <div className="size-1 rounded-full bg-zinc-700" />
           <span>
-            300KB
-            <span className="text-green-400 ml-1">-94%</span>
+            {formatBytes(upload.compressedSizeInBytes ?? 0)}
+            {upload.compressedSizeInBytes && (
+              <span className="text-green-400 ml-1">
+                -
+                {Math.round(
+                  ((upload.originalSizeInBytes - upload.compressedSizeInBytes) *
+                    100) /
+                    upload.originalSizeInBytes
+                )}
+                %
+              </span>
+            )}
           </span>
           <div className="size-1 rounded-full bg-zinc-700" />
+
           {upload.status === "success" && <span>100%</span>}
           {upload.status === "progress" && <span>{progress}%</span>}
           {upload.status === "error" && (
@@ -61,9 +77,11 @@ export function UploadWidgetUploadItem({
         </span>
       </div>
 
-      <Progress.Root 
-         value={progress}
-        className="bg-zinc-800 rounded-full h-1 overflow-hidden">
+      <Progress.Root
+        value={progress}
+        data-status={upload.status}
+        className="bg-zinc-800 rounded-full h-1 overflow-hidden group"
+      >
         <Progress.Indicator
           className="bg-indigo-500 h-1 group-data-[status=success]:bg-green-400 group-data-[status=error]:bg-red-400 group-data-[status=canceled]:bg-yellow-400 transition-all"
           style={{
@@ -72,8 +90,16 @@ export function UploadWidgetUploadItem({
         />
       </Progress.Root>
 
-      <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
-        <Button disabled={upload.status !== "success"} size="icon-sm">
+      <div className="absolute top-2 right-2 flex items-center gap-1">
+        <Button
+          size="icon-sm"
+          aria-disabled={!upload.remoteUrl}
+          onClick={() => {
+            if (upload.remoteUrl) {
+              downloadUrl(upload.remoteUrl);
+            }
+          }}
+        >
           <Download className="size-4" strokeWidth={1.5} />
           <span className="sr-only">Download compressed image</span>
         </Button>
@@ -92,6 +118,7 @@ export function UploadWidgetUploadItem({
         <Button
           disabled={!["canceled", "error"].includes(upload.status)}
           size="icon-sm"
+          onClick={() => retryUpload(uploadId)}
         >
           <RefreshCcw className="size-4" strokeWidth={1.5} />
           <span className="sr-only">Retry upload</span>
